@@ -15,6 +15,8 @@
 
           <div id="room-header-controls">
             <img id="mic-icon" class="control-icon" src="icons/mic-off.svg" />
+            <button id="camera-share" class="control-icon control-button">Camera</button>
+            <button id="screen-share" class="control-icon control-button">Share Screen</button>
             <img id="leave-icon" class="control-icon" src="icons/leave.svg" />
           </div>
         </div>
@@ -41,6 +43,13 @@
       
               <label>Room Name:</label>
               <input required name="roomname" type="text" placeholder="Enter room name..."/>
+
+              <label class="teacher-toggle">
+                <input name="isTeacher" type="checkbox"/>
+                I am the teacher (can share screen)
+              </label>
+
+              <p id="avatar-selected" class="avatar-selected-note">No avatar selected</p>
       
               <input name="username" type="submit" value="Enter Room"/>
           </div>
@@ -48,6 +57,12 @@
     
         <div id="members">
     
+        </div>
+
+        <div id="cams">
+        </div>
+
+        <div id="screens">
         </div>
     </div>
     <script type="module" src="/main.js"></script>

@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnHub | Online Course Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom styles -->
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --dark: #1f2937;
+            --light: #f9fafb;
+        }
+        
+        /* Smooth transitions */
+        * {
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a5b4fc;
+        }
+        
+        /* Animation for page transitions */
+        .page-transition {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Card hover effects */
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Modal animation */
+        .modal-animation {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Main App Container -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Navigation will be dynamically loaded here -->
+        <header id="header" class="sticky top-0 z-10 shadow-sm"></header>
+        
+        <!-- Main Content Area -->
+        <main id="main-content" class="flex-grow page-transition">
+            <!-- Home page will be loaded by default -->
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-6 mt-12">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="flex items-center mb-4 md:mb-0">
+                        <i class="fas fa-graduation-cap text-2xl text-indigo-400 mr-3"></i>
+                        <span class="text-xl font-bold">LearnHub</span>
+                    </div>
+                    <p class="text-gray-300 text-sm">Professional online course platform &copy; 2023. All rights reserved.</p>
+                    <div class="mt-4 md:mt-0">
+                        <a href="#" class="text-gray-300 hover:text-white mx-2 text-sm">Privacy Policy</a>
+                        <a href="#" class="text-gray-300 hover:text-white mx-2 text-sm">Terms of Service</a>
+                        <a href="#" class="text-gray-300 hover:text-white mx-2 text-sm">Contact</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Modal Container (hidden by default) -->
+    <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-20">
+        <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white modal-animation">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-lg font-bold text-gray-900"></h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600 text-2xl">
+                    &times;
+                </button>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // ===== STATE MANAGEMENT =====
+        const state = {
+            currentUser: null,
+            currentPage: 'home',
+            userRole: null, // 'student', 'teacher', 'admin'
+            
+            // Sample data for demonstration
+            users: [
+                { id: 1, name: 'John Student', email: 'john@example.com', password: '123456', role: 'student', status: 'approved' },
+                { id: 2, name: 'Jane Teacher', email: 'jane@example.com', password: '123456', role: 'teacher', status: 'approved' },
+                { id: 3, name: 'Admin User', email: 'admin@example.com', password: '123456', role: 'admin', status: 'approved' },
+                { id: 4, name: 'Pending Student', email: 'pending@example.com', password: '123456', role: 'student', status: 'pending' },
+                { id: 5, name: 'Pending Teacher', email: 'teacher@example.com', password: '123456', role: 'teacher', status: 'pending' }
+            ],
+            
+            courses: [
+                { id: 1, name: 'Web Development Fundamentals', teacher: 'Jane Teacher', date: '2023-10-15', time: '14:00', description: 'Learn the basics of HTML, CSS and JavaScript', teacherId: 2 },
+                { id: 2, name: 'Data Science Essentials', teacher: 'Alex Johnson', date: '2023-10-18', time: '16:00', description: 'Introduction to data analysis and visualization', teacherId: 2 },
+                { id: 3, name: 'Mobile App Development', teacher: 'Sam Wilson', date: '2023-10-20', time: '10:00', description: 'Build cross-platform apps with React Native', teacherId: 2 },
+                { id: 4, name: 'Digital Marketing Strategy', teacher: 'Jane Teacher', date: '2023-10-22', time: '13:00', description: 'Create effective digital marketing campaigns', teacherId: 2 }
+            ]
+        };
+        
+        // ===== UTILITY FUNCTIONS =====
+        const utils = {
+            // Format date to readable format
+            formatDate: (dateString) => {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            },
+            
+            // Show notification
+            showNotification: (message, type = 'info') => {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 z-30 p-4 rounded-md shadow-lg ${
+                    type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+                    type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+                    'bg-blue-100 text-blue-800 border border-blue-200'
+                }`;
+                notification.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas ${
+                            type === 'success' ? 'fa-check-circle' :
+                            type === 'error' ? 'fa-exclamation-circle' :
+                            'fa-info-circle'
+                        } mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Remove notification after 3 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            },
+            
+            // Validate email format
+            validateEmail: (email) => {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            },
+            
+            // Validate password (at least 6 characters)
+            validatePassword: (password) => {
+                return password.length >= 6;
+            }
+        };
+        
+        // ===== MODAL FUNCTIONS =====
+        const modal = {
+            open: (title, content) => {
+                document.getElementById('modal-title').textContent = title;
+                document.getElementById('modal-body').innerHTML = content;
+                document.getElementById('modal').classList.remove('hidden');
+            },
+            
+            close: () => {
+                document.getElementById('modal').classList.add('hidden');
+                document.getElementById('modal-body').innerHTML = '';
+            }
+        };
+        
+        // ===== PAGE RENDERING FUNCTIONS =====
+        const render = {
+            // Render navigation based on user role
+            header: () => {
+                const header = document.getElementById('header');
+                let navContent = '';
+                
+                if (state.currentUser) {
+                    // User is logged in
+                    navContent = `
+                        <nav class="bg-white shadow-sm">
+                            <div class="container mx-auto px-4">
+                                <div class="flex justify-between items-center h-16">
+                                    <!-- Logo -->
+                                    <div class="flex items-center">
+                                        <i class="fas fa-graduation-cap text-2xl text-indigo-600 mr-2"></i>
+                                        <span class="text-xl font-bold text-gray-800">LearnHub</span>
+                                    </div>
+                                    
+                                    <!-- Navigation Links -->
+                                    <div class="hidden md:flex space-x-8">
+                                        <a href="#" data-page="dashboard" class="text-gray-700 hover:text-indigo-600 font-medium ${state.currentPage === 'dashboard' ? 'text-indigo-600 border-b-2 border-indigo-600' : ''}">
+                                            Dashboard
+                                        </a>
+                                        ${state.userRole === 'teacher' ? `
+                                            <a href="#" data-page="teacher-courses" class="text-gray-700 hover:text-indigo-600 font-medium ${state.currentPage === 'teacher-courses' ? 'text-indigo-600 border-b-2 border-indigo-600' : ''}">
+                                                My Courses
+                                            </a>
+                                        ` : ''}
+                                        ${state.userRole === 'admin' ? `
+                                            <a href="#" data-page="admin" class="text-gray-700 hover:text-indigo-600 font-medium ${state.currentPage === 'admin' ? 'text-indigo-600 border-b-2 border-indigo-600' : ''}">
+                                                Admin
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                    
+                                    <!-- User Menu -->
+                                    <div class="flex items-center">
+                                        <div class="relative group">
+                                            <button class="flex items-center text-gray-700 hover:text-indigo-600">
+                                                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-2">
+                                                    <i class="fas fa-user text-indigo-600"></i>
+                                                </div>
+                                                <span class="hidden md:inline font-medium">${state.currentUser.name}</span>
+                                                <i class="fas fa-chevron-down ml-1 text-sm"></i>
+                                            </button>
+                                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 hidden group-hover:block z-10">
+                                                <div class="px-4 py-2 text-sm text-gray-700 border-b">
+                                                    <p class="font-medium">${state.currentUser.name}</p>
+                                                    <p class="text-gray-500">${state.userRole.charAt(0).toUpperCase() + state.userRole.slice(1)}</p>
+                                                </div>
+                                                <a href="#" data-page="profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                                <a href="#" id="logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </nav>
+                    `;
+                } else {
+                    // User is not logged in
+                    navContent = `
+                        <nav class="bg-white shadow-sm">
+                            <div class="container mx-auto px-4">
+                                <div class="flex justify-between items-center h-16">
+                                    <!-- Logo -->
+                                    <div class="flex items-center">
+                                        <i class="fas fa-graduation-cap text-2xl text-indigo-600 mr-2"></i>
+                                        <span class="text-xl font-bold text-gray-800">LearnHub</span>
+                                    </div>
+                                    
+                                    <!-- Navigation Links -->
+                                    <div class="hidden md:flex space-x-8">
+                                        <a href="#" data-page="home" class="text-gray-700 hover:text-indigo-600 font-medium ${state.currentPage === 'home' ? 'text-indigo-600 border-b-2 border-indigo-600' : ''}">
+                                            Home
+                                        </a>
+                                        <a href="#" data-page="register" class="text-gray-700 hover:text-indigo-600 font-medium ${state.currentPage === 'register' ? 'text-indigo-600 border-b-2 border-indigo-600' : ''}">
+                                            Register
+                                        </a>
+                                        <a href="#" data-page="login" class="text-gray-700 hover:text-indigo-600 font-medium ${state.currentPage === 'login' ? 'text-indigo-600 border-b-2 border-indigo-600' : ''}">
+                                            Login
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Mobile menu button -->
+                                    <div class="md:hidden">
+                                        <button id="mobile-menu-button" class="text-gray-700">
+                                            <i class="fas fa-bars text-xl"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Mobile menu -->
+                                <div id="mobile-menu" class="md:hidden hidden py-4 border-t">
+                                    <div class="flex flex-col space-y-3">
+                                        <a href="#" data-page="home" class="text-gray-700 hover:text-indigo-600 font-medium ${state.currentPage === 'home' ? 'text-indigo-600' : ''}">
+                                            Home
+                                        </a>
+                                        <a href="#" data-page="register" class="text-gray-700 hover:text-indigo-600 font-medium ${state.currentPage === 'register' ? 'text-indigo-600' : ''}">
+                                            Register
+                                        </a>
+                                        <a href="#" data-page="login" class="text-gray-700 hover:text-indigo-600 font-medium ${state.currentPage === 'login' ? 'text-indigo-600' : ''}">
+                                            Login
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </nav>
+                    `;
+                }
+                
+                header.innerHTML = navContent;
+                
+                // Add event listeners to navigation links
+                document.querySelectorAll('a[data-page]').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = link.getAttribute('data-page');
+                        router.navigate(page);
+                    });
+                });
+                
+                // Logout functionality
+                const logoutBtn = document.getElementById('logout');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        state.currentUser = null;
+                        state.userRole = null;
+                        router.navigate('home');
+                    });
+                }
+                
+                // Mobile menu toggle
+                const mobileMenuBtn = document.getElementById('mobile-menu-button');
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (mobileMenuBtn && mobileMenu) {
+                    mobileMenuBtn.addEventListener('click', () => {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                }
+            },
+            
+            // Render home page
+            home: () => {
+                const main = document.getElementById('main-content');
+                main.innerHTML = `
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-16">
+                        <div class="container mx-auto px-4">
+                            <div class="max-w-3xl mx-auto text-center">
+                                <h1 class="text-4xl md:text-5xl font-bold mb-6">Welcome to LearnHub</h1>
+                                <p class="text-xl mb-10 opacity-90">A professional platform for online learning. Join thousands of students and teachers in our interactive courses.</p>
+                                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                                    <a href="#" data-page="register" class="bg-white text-indigo-600 hover:bg-gray-100 font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:-translate-y-1 transition duration-300">
+                                        Get Started
+                                    </a>
+                                    <a href="#" data-page="login" class="bg-transparent border-2 border-white text-white hover:bg-white hover:text-indigo-600 font-bold py-3 px-8 rounded-lg text-lg transition duration-300">
+                                        Sign In
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="container mx-auto px-4 py-16">
+                        <div class="text-center mb-12">
+                            <h2 class="text-3xl font-bold text-gray-800 mb-4">Why Choose LearnHub?</h2>
+                            <p class="text-gray-600 max-w-2xl mx-auto">Our platform offers the best tools for both students and teachers to create an engaging learning experience.</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                            <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition duration-300">
+                                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-6 mx-auto">
+                                    <i class="fas fa-chalkboard-teacher text-2xl text-indigo-600"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Interactive Live Classes</h3>
+                                <p class="text-gray-600 text-center">Join live sessions with teachers and interact in real-time with Q&A, polls, and collaborative tools.</p>
+                            </div>
+                            
+                            <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition duration-300">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6 mx-auto">
+                                    <i class="fas fa-user-graduate text-2xl text-green-600"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Student-Focused</h3>
+                                <p class="text-gray-600 text-center">Easy access to all your courses, assignments, and progress tracking in one intuitive dashboard.</p>
+                            </div>
+                            
+                            <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition duration-300">
+                                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-6 mx-auto">
+                                    <i class="fas fa-chart-line text-2xl text-yellow-600"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Analytics Dashboard</h3>
+                                <p class="text-gray-600 text-center">Teachers get detailed insights into student engagement and performance with our analytics tools.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-2xl shadow-inner">
+                            <div class="max-w-3xl mx-auto text-center">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-6">Ready to start your learning journey?</h2>
+                                <a href="#" data-page="register" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:-translate-y-1 transition duration-300">
+                                    Join Now for Free
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners to page links
+                document.querySelectorAll('a[data-page]').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = link.getAttribute('data-page');
+                        router.navigate(page);
+                    });
+                });
+            },
+            
+            // Render registration page
+            register: () => {
+                const main = document.getElementById('main-content');
+                main.innerHTML = `
+                    <div class="container mx-auto px-4 py-12">
+                        <div class="max-w-4xl mx-auto">
+                            <div class="text-center mb-10">
+                                <h1 class="text-3xl font-bold text-gray-800 mb-4">Create Your Account</h1>
+                                <p class="text-gray-600">Join LearnHub as a student or teacher to start your educational journey.</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <!-- Student Registration -->
+                                <div class="bg-white rounded-xl shadow-md p-8 border border-gray-100">
+                                    <div class="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6 mx-auto">
+                                        <i class="fas fa-user-graduate text-2xl text-blue-600"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Student Registration</h3>
+                                    <p class="text-gray-600 mb-6 text-center">Join courses, learn from experts, and track your progress.</p>
+                                    
+                                    <form id="student-register-form">
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 mb-2" for="student-name">Full Name</label>
+                                            <input type="text" id="student-name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your full name" required>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 mb-2" for="student-email">Email Address</label>
+                                            <input type="email" id="student-email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your email" required>
+                                        </div>
+                                        
+                                        <div class="mb-6">
+                                            <label class="block text-gray-700 mb-2" for="student-password">Password</label>
+                                            <input type="password" id="student-password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="At least 6 characters" required>
+                                            <p class="text-gray-500 text-sm mt-1">Must be at least 6 characters long</p>
+                                        </div>
+                                        
+                                        <input type="hidden" id="student-role" value="student">
+                                        
+                                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                                            Register as Student
+                                        </button>
+                                    </form>
+                                </div>
+                                
+                                <!-- Teacher Registration -->
+                                <div class="bg-white rounded-xl shadow-md p-8 border border-gray-100">
+                                    <div class="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-6 mx-auto">
+                                        <i class="fas fa-chalkboard-teacher text-2xl text-green-600"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Teacher Registration</h3>
+                                    <p class="text-gray-600 mb-6 text-center">Create and manage courses, teach live sessions, and track student progress.</p>
+                                    
+                                    <form id="teacher-register-form">
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 mb-2" for="teacher-name">Full Name</label>
+                                            <input type="text" id="teacher-name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your full name" required>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 mb-2" for="teacher-email">Email Address</label>
+                                            <input type="email" id="teacher-email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your email" required>
+                                        </div>
+                                        
+                                        <div class="mb-6">
+                                            <label class="block text-gray-700 mb-2" for="teacher-password">Password</label>
+                                            <input type="password" id="teacher-password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="At least 6 characters" required>
+                                            <p class="text-gray-500 text-sm mt-1">Must be at least 6 characters long</p>
+                                        </div>
+                                        
+                                        <input type="hidden" id="teacher-role" value="teacher">
+                                        
+                                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                                            Register as Teacher
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-8">
+                                <p class="text-gray-600">Already have an account? <a href="#" data-page="login" class="text-indigo-600 hover:text-indigo-800 font-medium">Sign in here</a></p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners
+                document.querySelectorAll('a[data-page]').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = link.getAttribute('data-page');
+                        router.navigate(page);
+                    });
+                });
+                
+                // Student form submission
+                document.getElementById('student-register-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const name = document.getElementById('student-name').value;
+                    const email = document.getElementById('student-email').value;
+                    const password = document.getElementById('student-password').value;
+                    
+                    if (!utils.validateEmail(email)) {
+                        utils.showNotification('Please enter a valid email address', 'error');
+                        return;
+                    }
+                    
+                    if (!utils.validatePassword(password)) {
+                        utils.showNotification('Password must be at least 6 characters long', 'error');
+                        return;
+                    }
+                    
+                    // Check if email already exists
+                    const existingUser = state.users.find(user => user.email === email);
+                    if (existingUser) {
+                        utils.showNotification('Email already registered. Please use a different email or login.', 'error');
+                        return;
+                    }
+                    
+                    // Add user with pending status (needs admin approval)
+                    const newUser = {
+                        id: state.users.length + 1,
+                        name,
+                        email,
+                        password,
+                        role: 'student',
+                        status: 'pending'
+                    };
+                    
+                    state.users.push(newUser);
+                    utils.showNotification('Registration successful! Your account is pending admin approval.', 'success');
+                    
+                    // Clear form
+                    document.getElementById('student-register-form').reset();
+                    
+                    // Redirect to login after 2 seconds
+                    setTimeout(() => {
+                        router.navigate('login');
+                    }, 2000);
+                });
+                
+                // Teacher form submission
+                document.getElementById('teacher-register-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const name = document.getElementById('teacher-name').value;
+                    const email = document.getElementById('teacher-email').value;
+                    const password = document.getElementById('teacher-password').value;
+                    
+                    if (!utils.validateEmail(email)) {
+                        utils.showNotification('Please enter a valid email address', 'error');
+                        return;
+                    }
+                    
+                    if (!utils.validatePassword(password)) {
+                        utils.showNotification('Password must be at least 6 characters long', 'error');
+                        return;
+                    }
+                    
+                    // Check if email already exists
+                    const existingUser = state.users.find(user => user.email === email);
+                    if (existingUser) {
+                        utils.showNotification('Email already registered. Please use a different email or login.', 'error');
+                        return;
+                    }
+                    
+                    // Add user with pending status (needs admin approval)
+                    const newUser = {
+                        id: state.users.length + 1,
+                        name,
+                        email,
+                        password,
+                        role: 'teacher',
+                        status: 'pending'
+                    };
+                    
+                    state.users.push(newUser);
+                    utils.showNotification('Registration successful! Your account is pending admin approval.', 'success');
+                    
+                    // Clear form
+                    document.getElementById('teacher-register-form').reset();
+                    
+                    // Redirect to login after 2 seconds
+                    setTimeout(() => {
+                        router.navigate('login');
+                    }, 2000);
+                });
+            },
+            
+            // Render login page
+            login: () => {
+                const main = document.getElementById('main-content');
+                main.innerHTML = `
+                    <div class="container mx-auto px-4 py-12">
+                        <div class="max-w-md mx-auto">
+                            <div class="text-center mb-10">
+                                <div class="flex items-center justify-center mb-6">
+                                    <i class="fas fa-graduation-cap text-4xl text-indigo-600 mr-3"></i>
+                                    <span class="text-3xl font-bold text-gray-800">LearnHub</span>
+                                </div>
+                                <h1 class="text-3xl font-bold text-gray-800 mb-4">Sign In to Your Account</h1>
+                                <p class="text-gray-600">Access your courses and teaching tools</p>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl shadow-md p-8 border border-gray-100">
+                                <form id="login-form">
+                                    <div class="mb-6">
+                                        <label class="block text-gray-700 mb-2" for="login-email">Email Address</label>
+                                        <input type="email" id="login-email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your email" required>
+                                    </div>
+                                    
+                                    <div class="mb-6">
+                                        <label class="block text-gray-700 mb-2" for="login-password">Password</label>
+                                        <input type="password" id="login-password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter your password" required>
+                                    </div>
+                                    
+                                    <div class="mb-6">
+                                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                                            Sign In
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="text-center">
+                                        <p class="text-gray-600">Don't have an account? <a href="#" data-page="register" class="text-indigo-600 hover:text-indigo-800 font-medium">Register here</a></p>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <div class="mt-8 text-center">
+                                <p class="text-gray-500 text-sm">Demo Accounts:</p>
+                                <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div class="bg-blue-50 p-3 rounded-lg">
+                                        <p class="font-medium text-blue-800">Student</p>
+                                        <p class="text-sm text-blue-600">john@example.com</p>
+                                        <p class="text-sm text-blue-600">123456</p>
+                                    </div>
+                                    <div class="bg-green-50 p-3 rounded-lg">
+                                        <p class="font-medium text-green-800">Teacher</p>
+                                        <p class="text-sm text-green-600">jane@example.com</p>
+                                        <p class="text-sm text-green-600">123456</p>
+                                    </div>
+                                    <div class="bg-purple-50 p-3 rounded-lg">
+                                        <p class="font-medium text-purple-800">Admin</p>
+                                        <p class="text-sm text-purple-600">admin@example.com</p>
+                                        <p class="text-sm text-purple-600">123456</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners
+                document.querySelectorAll('a[data-page]').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const page = link.getAttribute('data-page');
+                        router.navigate(page);
+                    });
+                });
+                
+                // Login form submission
+                document.getElementById('login-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('login-email').value;
+                    const password = document.getElementById('login-password').value;
+                    
+                    // Find user
+                    const user = state.users.find(u => u.email === email && u.password === password);
+                    
+                    if (!user) {
+                        utils.showNotification('Invalid email or password', 'error');
+                        return;
+                    }
+                    
+                    if (user.status !== 'approved') {
+                        utils.showNotification('Your account is pending admin approval', 'warning');
+                        return;
+                    }
+                    
+                    // Login successful
+                    state.currentUser = user;
+                    state.userRole = user.role;
+                    utils.showNotification(`Welcome back, ${user.name}!`, 'success');
+                    
+                    // Navigate to appropriate dashboard
+                    if (user.role === 'admin') {
+                        router.navigate('admin');
+                    } else if (user.role === 'teacher') {
+                        router.navigate('teacher-courses');
+                    } else {
+                        router.navigate('dashboard');
+                    }
+                });
+            },
+            
+            // Render student dashboard
+            dashboard: () => {
+                const main = document.getElementById('main-content');
+                
+                // Get available courses
+                const availableCourses = state.courses;
+                
+                main.innerHTML = `
+                    <div class="container mx-auto px-4 py-8">
+                        <div class="mb-8">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Welcome, ${state.currentUser.name}!</h1>
+                            <p class="text-gray-600">Here are your available live courses</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            ${availableCourses.map(course => `
+                                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300 course-card border border-gray-100">
+                                    <div class="p-6">
+                                        <div class="flex justify-between items-start mb-4">
+                                            <h3 class="text-xl font-bold text-gray-800">${course.name}</h3>
+                                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Live</span>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <div class="flex items-center text-gray-600 mb-2">
+                                                <i class="fas fa-chalkboard-teacher mr-2"></i>
+                                                <span class="font-medium">${course.teacher}</span>
+                                            </div>
+                                            <div class="flex items-center text-gray-600 mb-2">
+                                                <i class="fas fa-calendar-alt mr-2"></i>
+                                                <span>${utils.formatDate(course.date)}</span>
+                                            </div>
+                                            <div class="flex items-center text-gray-600">
+                                                <i class="fas fa-clock mr-2"></i>
+                                                <span>${course.time}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <p class="text-gray-600 mb-6">${course.description}</p>
+                                        
+                                        <button class="join-course-btn w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300" data-course-id="${course.id}">
+                                            <i class="fas fa-video mr-2"></i> Join Live Session
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        ${availableCourses.length === 0 ? `
+                            <div class="bg-white rounded-xl shadow-md p-8 text-center">
+                                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-book-open text-3xl text-gray-400"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-4">No courses available</h3>
+                                <p class="text-gray-600 mb-6">There are no live courses scheduled at the moment. Please check back later.</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                // Add event listeners to join course buttons
+                document.querySelectorAll('.join-course-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const courseId = parseInt(e.target.getAttribute('data-course-id'));
+                        const course = state.courses.find(c => c.id === courseId);
+                        
+                        if (course) {
+                            modal.open(
+                                `Join ${course.name}`,
+                                `
+                                    <div class="text-center">
+                                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <i class="fas fa-video text-2xl text-indigo-600"></i>
+                                        </div>
+                                        <h4 class="text-xl font-bold text-gray-800 mb-4">Ready to join the live session?</h4>
+                                        <p class="text-gray-600 mb-6">You're about to join "${course.name}" taught by ${course.teacher}.</p>
+                                        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                                            <p class="text-gray-700 font-medium"><i class="fas fa-calendar-alt mr-2"></i> ${utils.formatDate(course.date)} at ${course.time}</p>
+                                        </div>
+                                        <div class="flex justify-center space-x-4">
+                                            <button id="confirm-join" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300">
+                                                Join Now
+                                            </button>
+                                            <button id="cancel-join" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-300">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                `
+                            );
+                            
+                            document.getElementById('confirm-join').addEventListener('click', () => {
+                                utils.showNotification(`Joining "${course.name}" live session...`, 'success');
+                                modal.close();
+                                
+                                // In a real app, this would redirect to the live session
+                                setTimeout(() => {
+                                    utils.showNotification(`Successfully joined "${course.name}"!`, 'success');
+                                }, 1000);
+                            });
+                            
+                            document.getElementById('cancel-join').addEventListener('click', () => {
+                                modal.close();
+                            });
+                        }
+                    });
+                });
+            },
+            
+            // Render teacher courses page
+            teacherCourses: () => {
+                const main = document.getElementById('main-content');
+                
+                // Get teacher's courses
+                const teacherCourses = state.courses.filter(course => course.teacherId === state.currentUser.id);
+                
+                main.innerHTML = `
+                    <div class="container mx-auto px-4 py-8">
+                        <div class="mb-8">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">My Courses</h1>
+                            <p class="text-gray-600">Manage your live courses and create new ones</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Create New Course Form -->
+                            <div class="lg:col-span-1">
+                                <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 sticky top-6">
+                                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Create New Course</h2>
+                                    
+                                    <form id="create-course-form">
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 mb-2" for="course-name">Course Name</label>
+                                            <input type="text" id="course-name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Enter course name" required>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 mb-2" for="course-date">Date</label>
+                                            <input type="date" id="course-date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 mb-2" for="course-time">Time</label>
+                                            <input type="time" id="course-time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                        </div>
+                                        
+                                        <div class="mb-6">
+                                            <label class="block text-gray-700 mb-2" for="course-description">Description</label>
+                                            <textarea id="course-description" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Describe your course" required></textarea>
+                                        </div>
+                                        
+                                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                                            <i class="fas fa-plus-circle mr-2"></i> Create Course
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Teacher's Courses List -->
+                            <div class="lg:col-span-2">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-6">Your Live Courses (${teacherCourses.length})</h2>
+                                
+                                ${teacherCourses.length > 0 ? `
+                                    <div class="space-y-6">
+                                        ${teacherCourses.map(course => `
+                                            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300 border border-gray-100">
+                                                <div class="p-6">
+                                                    <div class="flex justify-between items-start mb-4">
+                                                        <h3 class="text-xl font-bold text-gray-800">${course.name}</h3>
+                                                        <div class="flex space-x-2">
+                                                            <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">Live</span>
+                                                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">${course.date}</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <p class="text-gray-600 mb-6">${course.description}</p>
+                                                    
+                                                    <div class="flex justify-between items-center">
+                                                        <div class="text-gray-700">
+                                                            <i class="fas fa-clock mr-1"></i> ${course.time}
+                                                        </div>
+                                                        <div class="flex space-x-3">
+                                                            <button class="start-session-btn bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300" data-course-id="${course.id}">
+                                                                <i class="fas fa-play mr-2"></i> Start Session
+                                                            </button>
+                                                            <button class="edit-course-btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition duration-300" data-course-id="${course.id}">
+                                                                <i class="fas fa-edit mr-2"></i> Edit
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : `
+                                    <div class="bg-white rounded-xl shadow-md p-8 text-center">
+                                        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <i class="fas fa-chalkboard-teacher text-3xl text-gray-400"></i>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-gray-800 mb-4">No courses yet</h3>
+                                        <p class="text-gray-600 mb-6">Create your first live course using the form on the left.</p>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Set default date to tomorrow
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const formattedDate = tomorrow.toISOString().split('T')[0];
+                document.getElementById('course-date').value = formattedDate;
+                
+                // Set default time to current time + 1 hour
+                const nextHour = new Date();
+                nextHour.setHours(nextHour.getHours() + 1);
+                const formattedTime = `${nextHour.getHours().toString().padStart(2, '0')}:00`;
+                document.getElementById('course-time').value = formattedTime;
+                
+                // Create course form submission
+                document.getElementById('create-course-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const name = document.getElementById('course-name').value;
+                    const date = document.getElementById('course-date').value;
+                    const time = document.getElementById('course-time').value;
+                    const description = document.getElementById('course-description').value;
+                    
+                    // Create new course
+                    const newCourse = {
+                        id: state.courses.length + 1,
+                        name,
+                        teacher: state.currentUser.name,
+                        date,
+                        time,
+                        description,
+                        teacherId: state.currentUser.id
+                    };
+                    
+                    state.courses.push(newCourse);
+                    utils.showNotification(`Course "${name}" created successfully!`, 'success');
+                    
+                    // Clear form
+                    document.getElementById('create-course-form').reset();
+                    
+                    // Reset default values
+                    document.getElementById('course-date').value = formattedDate;
+                    document.getElementById('course-time').value = formattedTime;
+                    
+                    // Re-render the page to show the new course
+                    setTimeout(() => {
+                        render.teacherCourses();
+                    }, 500);
+                });
+                
+                // Add event listeners to start session buttons
+                document.querySelectorAll('.start-session-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const courseId = parseInt(e.target.getAttribute('data-course-id'));
+                        const course = state.courses.find(c => c.id === courseId);
+                        
+                        if (course) {
+                            utils.showNotification(`Starting live session for "${course.name}"...`, 'success');
+                            
+                            // In a real app, this would start the live session
+                            setTimeout(() => {
+                                utils.showNotification(`Live session for "${course.name}" is now active!`, 'success');
+                            }, 1000);
+                        }
+                    });
+                });
+            },
+            
+            // Render admin dashboard
+            admin: () => {
+                const main = document.getElementById('main-content');
+                
+                // Get pending users
+                const pendingUsers = state.users.filter(user => user.status === 'pending');
+                const approvedStudents = state.users.filter(user => user.role === 'student' && user.status === 'approved');
+                const approvedTeachers = state.users.filter(user => user.role === 'teacher' && user.status === 'approved');
+                
+                main.innerHTML = `
+                    <div class="container mx-auto px-4 py-8">
+                        <div class="mb-8">
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
+                            <p class="text-gray-600">Manage user registrations and platform statistics</p>
+                        </div>
+                        
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-gray-500 text-sm font-medium">Pending Registrations</p>
+                                        <h3 class="text-3xl font-bold text-gray-800 mt-2">${pendingUsers.length}</h3>
+                                    </div>
+                                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-clock text-xl text-blue-600"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-gray-500 text-sm font-medium">Approved Students</p>
+                                        <h3 class="text-3xl font-bold text-gray-800 mt-2">${approvedStudents.length}</h3>
+                                    </div>
+                                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user-graduate text-xl text-green-600"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-gray-500 text-sm font-medium">Approved Teachers</p>
+                                        <h3 class="text-3xl font-bold text-gray-800 mt-2">${approvedTeachers.length}</h3>
+                                    </div>
+                                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-chalkboard-teacher text-xl text-purple-600"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pending Registrations Table -->
+                        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <h2 class="text-xl font-bold text-gray-800">Pending Registration Requests</h2>
+                                <p class="text-gray-600 text-sm">Approve or reject new user registrations</p>
+                            </div>
+                            
+                            ${pendingUsers.length > 0 ? `
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration Date</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            ${pendingUsers.map(user => `
+                                                <tr class="hover:bg-gray-50">
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <div class="flex items-center">
+                                                            <div class="flex-shrink-0 h-10 w-10 rounded-full ${user.role === 'student' ? 'bg-blue-100' : 'bg-green-100'} flex items-center justify-center">
+                                                                <i class="fas ${user.role === 'student' ? 'fa-user-graduate text-blue-600' : 'fa-chalkboard-teacher text-green-600'}"></i>
+                                                            </div>
+                                                            <div class="ml-4">
+                                                                <div class="text-sm font-medium text-gray-900">${user.name}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <div class="text-sm text-gray-900">${user.email}</div>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'student' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                                            ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        ${utils.formatDate(new Date().toISOString().split('T')[0])}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                        <button class="approve-user-btn mr-3 bg-green-100 hover:bg-green-200 text-green-800 py-2 px-4 rounded-lg transition duration-300" data-user-id="${user.id}">
+                                                            <i class="fas fa-check mr-1"></i> Approve
+                                                        </button>
+                                                        <button class="reject-user-btn bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded-lg transition duration-300" data-user-id="${user.id}">
+                                                            <i class="fas fa-times mr-1"></i> Reject
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : `
+                                <div class="p-8 text-center">
+                                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <i class="fas fa-check-circle text-3xl text-gray-400"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-800 mb-4">No pending registrations</h3>
+                                    <p class="text-gray-600">All registration requests have been processed.</p>
+                                </div>
+                            `}
+                        </div>
+                        
+                        <!-- Platform Information -->
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-md p-8 text-white">
+                            <h2 class="text-2xl font-bold mb-4">Platform Overview</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-3">Total Users</h3>
+                                    <p class="text-4xl font-bold mb-2">${state.users.filter(u => u.status === 'approved').length}</p>
+                                    <p class="opacity-90">Active platform users</p>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold mb-3">Total Courses</h3>
+                                    <p class="text-4xl font-bold mb-2">${state.courses.length}</p>
+                                    <p class="opacity-90">Live courses available</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners to approve/reject buttons
+                document.querySelectorAll('.approve-user-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const userId = parseInt(e.target.getAttribute('data-user-id'));
+                        const user = state.users.find(u => u.id === userId);
+                        
+                        if (user) {
+                            modal.open(
+                                `Approve Registration`,
+                                `
+                                    <div class="text-center">
+                                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <i class="fas fa-check text-2xl text-green-600"></i>
+                                        </div>
+                                        <h4 class="text-xl font-bold text-gray-800 mb-4">Approve ${user.name}'s registration?</h4>
+                                        <p class="text-gray-600 mb-6">This will grant ${user.name} (${user.role}) access to the platform.</p>
+                                        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                                            <p class="text-gray-700"><span class="font-medium">Email:</span> ${user.email}</p>
+                                            <p class="text-gray-700"><span class="font-medium">Role:</span> ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</p>
+                                        </div>
+                                        <div class="flex justify-center space-x-4">
+                                            <button id="confirm-approve" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300" data-user-id="${user.id}">
+                                                Approve
+                                            </button>
+                                            <button id="cancel-approve" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-300">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                `
+                            );
+                            
+                            document.getElementById('confirm-approve').addEventListener('click', () => {
+                                user.status = 'approved';
+                                utils.showNotification(`Approved ${user.name}'s registration`, 'success');
+                                modal.close();
+                                
+                                // Re-render admin page
+                                setTimeout(() => {
+                                    render.admin();
+                                }, 500);
+                            });
+                            
+                            document.getElementById('cancel-approve').addEventListener('click', () => {
+                                modal.close();
+                            });
+                        }
+                    });
+                });
+                
+                document.querySelectorAll('.reject-user-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const userId = parseInt(e.target.getAttribute('data-user-id'));
+                        const user = state.users.find(u => u.id === userId);
+                        
+                        if (user) {
+                            modal.open(
+                                `Reject Registration`,
+                                `
+                                    <div class="text-center">
+                                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <i class="fas fa-times text-2xl text-red-600"></i>
+                                        </div>
+                                        <h4 class="text-xl font-bold text-gray-800 mb-4">Reject ${user.name}'s registration?</h4>
+                                        <p class="text-gray-600 mb-6">This will deny ${user.name} (${user.role}) access to the platform.</p>
+                                        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                                            <p class="text-gray-700"><span class="font-medium">Email:</span> ${user.email}</p>
+                                            <p class="text-gray-700"><span class="font-medium">Role:</span> ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</p>
+                                        </div>
+                                        <div class="flex justify-center space-x-4">
+                                            <button id="confirm-reject" class="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300" data-user-id="${user.id}">
+                                                Reject
+                                            </button>
+                                            <button id="cancel-reject" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-300">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                `
+                            );
+                            
+                            document.getElementById('confirm-reject').addEventListener('click', () => {
+                                // Remove user from state
+                                state.users = state.users.filter(u => u.id !== user.id);
+                                utils.showNotification(`Rejected ${user.name}'s registration`, 'success');
+                                modal.close();
+                                
+                                // Re-render admin page
+                                setTimeout(() => {
+                                    render.admin();
+                                }, 500);
+                            });
+                            
+                            document.getElementById('cancel-reject').addEventListener('click', () => {
+                                modal.close();
+                            });
+                        }
+                    });
+                });
+            }
+        };
+        
+        // ===== ROUTER =====
+        const router = {
+            // Navigate to a page
+            navigate: (page) => {
+                state.currentPage = page;
+                
+                // Render the page
+                if (page === 'home') {
+                    render.home();
+                } else if (page === 'register') {
+                    render.register();
+                } else if (page === 'login') {
+                    render.login();
+                } else if (page === 'dashboard') {
+                    if (!state.currentUser) {
+                        router.navigate('login');
+                        return;
+                    }
+                    render.dashboard();
+                } else if (page === 'teacher-courses') {
+                    if (!state.currentUser || state.userRole !== 'teacher') {
+                        router.navigate('login');
+                        return;
+                    }
+                    render.teacherCourses();
+                } else if (page === 'admin') {
+                    if (!state.currentUser || state.userRole !== 'admin') {
+                        router.navigate('login');
+                        return;
+                    }
+                    render.admin();
+                } else {
+                    // Default to home page
+                    router.navigate('home');
+                }
+                
+                // Render header
+                render.header();
+            }
+        };
+        
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            // Close modal when clicking X or outside
+            document.getElementById('close-modal').addEventListener('click', () => {
+                modal.close();
+            });
+            
+            // Close modal when clicking outside
+            document.getElementById('modal').addEventListener('click', (e) => {
+                if (e.target.id === 'modal') {
+                    modal.close();
+                }
+            });
+            
+            // Initialize the app with home page
+            router.navigate('home');
+        });
+    </script>
+</body>
+</html>

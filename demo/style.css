@@ -35,6 +35,7 @@ body {
 
 #room-header-controls{
   display: flex;
+  align-items: center;
 }
 
 #room-header-controls > img {
@@ -48,6 +49,15 @@ body {
   height: 20px;
   cursor: pointer;
   border-radius: 5px;
+}
+
+.control-button{
+  height: auto;
+  line-height: 1.2;
+  font-size: 0.8rem;
+  color: #fff;
+  background-color: #3b82f6;
+  margin: 0 6px;
 }
 
 
@@ -94,6 +104,67 @@ body {
   border-radius: 50%;
 }
 
+#screens{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75em;
+  margin-top: 1em;
+}
+
+#cams{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75em;
+  margin-top: 1em;
+}
+
+.cam-player,
+.screen-player{
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cam-player{
+  border-color: #555;
+}
+
+.screen-btn{
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  border: 1px solid #666;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.screen-btn.secondary{
+  right: 82px;
+}
+
+.screen-player.screen-wide,
+.cam-player.cam-wide{
+  width: 100%;
+  max-width: 100%;
+}
+
+.screen-player video,
+.cam-player video{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 #form input{
   width: 100%;
   padding: 1em;
@@ -103,6 +174,18 @@ body {
 
 #form label{
   margin-bottom: 0.5em;
+}
+
+#form .teacher-toggle{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar-selected-note{
+  margin: 0.25em 0 0.75em 0;
+  font-size: 0.9rem;
+  color: #ddd;
 }
 
 #form-fields{

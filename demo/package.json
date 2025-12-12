@@ -10,5 +10,9 @@
   },
   "devDependencies": {
     "vite": "^4.0.0"
+  },
+  "dependencies": {
+    "agora-rtc-sdk-ng": "^4.24.1",
+    "agora-rtm-sdk": "^2.2.3-1"
   }
 }
