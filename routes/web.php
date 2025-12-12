@@ -8,6 +8,7 @@ use App\Http\Controllers\VoiceChatController;
 use App\Http\Controllers\Student;
 use App\Http\Controllers\Teacher;
 use App\Http\Controllers\Admin\AuthenticationController;
+use App\Http\Controllers\Admin\AdminController;
 use Illuminate\Support\Facades\Hash;
 use App\Models\admins;
 
@@ -41,6 +42,15 @@ Route::get('/register',[Student::class, 'loadRequestPage'])->name('Register.requ
 Route::post('/register',[Student::class, 'placeRequest'])->name('Register.post');
 
 Route::post('/registerTeacher',[Teacher::class, 'placeRequest'])->name('registerTeacher.post');
+
+Route::post('/approaveStudent/{id}',[Teacher::class, 'placeRequest'])->name('registerTeacher.post');
+
+Route::post('/approaveStudent/{id}',[AdminController::class, 'approaveStudent'])->name('approaveStudent');
+Route::post('/rejectStudent/{id}',[AdminController::class, 'rejectStudent'])->name('rejectStudent');
+
+Route::post('/approaveTeacher/{id}',[AdminController::class, 'approaveTeacher'])->name('approaveTeacher');
+Route::post('/rejectTeacher/{id}',[AdminController::class, 'rejectTeacher'])->name('rejectTeacher');
+
 // create admin 
 Route::get('/Admin/Create', function(){
    

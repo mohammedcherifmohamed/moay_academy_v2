@@ -44,6 +44,20 @@
     
     <!-- Admin Dashboard Content -->
     <main class="container mx-auto px-4 py-8">
+         @if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+@if (session('success'))
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
+@endif
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-800 mb-2">Admin Dashboard</h1>
             <p class="text-gray-600">Manage user registrations and platform statistics</p>
@@ -132,12 +146,27 @@
                                     {{$student->phone}}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button class="approve-user-btn mr-3 bg-green-100 hover:bg-green-200 text-green-800 py-2 px-4 rounded-lg transition duration-300" data-user-id="1" data-user-name="John Student">
-                                            <i class="fas fa-check mr-1"></i> Approve
-                                        </button>
-                                        <button class="reject-user-btn bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded-lg transition duration-300" data-user-id="1" data-user-name="John Student">
-                                            <i class="fas fa-times mr-1"></i> Reject
-                                        </button>
+<form action="{{ route('approaveStudent', $student->id) }}" method="POST" class="approve-form">
+    @csrf
+    <button 
+        type="button"
+        class="approve-user-btn mr-3 bg-green-100 hover:bg-green-200 text-green-800 py-2 px-4 rounded-lg transition duration-300"
+        data-user-id="{{ $student->id }}"
+        data-user-name="{{ $student->name }}">
+        <i class="fas fa-check mr-1"></i> Approve
+    </button>
+</form>
+
+                                        <form action="{{ route('rejectStudent', $student->id) }}" method="POST">
+    @csrf
+    <button 
+        type="button"
+        class="reject-user-btn bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded-lg"
+        data-user-name="{{ $student->name }}">
+           <i class="fas fa-times mr-1"></i> Reject
+    </button>
+</form>
+
                                     </td>
                                 </tr>
                          @endforeach
@@ -170,12 +199,27 @@
                                 {{$teacher->phone}}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <button class="approve-user-btn mr-3 bg-green-100 hover:bg-green-200 text-green-800 py-2 px-4 rounded-lg transition duration-300" data-user-id="2" data-user-name="Jane Teacher">
-                                        <i class="fas fa-check mr-1"></i> Approve
-                                    </button>
-                                    <button class="reject-user-btn bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded-lg transition duration-300" data-user-id="2" data-user-name="Jane Teacher">
-                                        <i class="fas fa-times mr-1"></i> Reject
-                                    </button>
+                                   <form action="{{ route('approaveTeacher', $teacher->id) }}" method="POST" class="approve-form">
+    @csrf
+    <button 
+        type="button"
+        class="approve-user-btn mr-3 bg-green-100 hover:bg-green-200 text-green-800 py-2 px-4 rounded-lg transition duration-300"
+        data-user-id="{{ $teacher->id }}"
+        data-user-name="{{ $teacher->name }}">
+        <i class="fas fa-check mr-1"></i> Approve
+    </button>
+</form>
+
+                                        <form action="{{ route('rejectTeacher', $teacher->id) }}" method="POST">
+    @csrf
+    <button 
+        type="button"
+        class="reject-user-btn bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded-lg"
+        data-user-name="{{ $teacher->name }}">
+           <i class="fas fa-times mr-1"></i> Reject
+    </button>
+</form>
+
                                 </td>
                             </tr>
                         @endforeach
@@ -272,138 +316,93 @@
                 }
             });
             
-            // Approve user buttons
-            document.querySelectorAll('.approve-user-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const userId = e.target.getAttribute('data-user-id');
-                    const userName = e.target.getAttribute('data-user-name');
-                    
-                    modal.open(
-                        `Approve Registration`,
-                        `
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <i class="fas fa-check text-2xl text-green-600"></i>
-                            </div>
-                            <h4 class="text-xl font-bold text-gray-800 mb-4">Approve ${userName}'s registration?</h4>
-                            <p class="text-gray-600 mb-6">This will grant ${userName} access to the platform.</p>
-                            <div class="flex justify-center space-x-4">
-                                <button id="confirm-approve" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300">
-                                    Approve
-                                </button>
-                                <button id="cancel-approve" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-300">
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                        `
-                    );
-                    
-                    document.getElementById('confirm-approve').addEventListener('click', () => {
-                        // Remove the row from the table
-                        const row = button.closest('tr');
-                        row.remove();
-                        
-                        // Update stats
-                        updateStats();
-                        
-                        modal.open(
-                            'Registration Approved',
-                            `
-                            <div class="text-center">
-                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <i class="fas fa-check-circle text-2xl text-green-600"></i>
-                                </div>
-                                <h4 class="text-xl font-bold text-gray-800 mb-4">Approved Successfully!</h4>
-                                <p class="text-gray-600 mb-6">${userName} has been approved and can now access the platform.</p>
-                                <button id="close-success" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300">
-                                    Close
-                                </button>
-                            </div>
-                            `
-                        );
-                        
-                        document.getElementById('close-success').addEventListener('click', () => {
-                            modal.close();
-                        });
-                    });
-                    
-                    document.getElementById('cancel-approve').addEventListener('click', () => {
-                        modal.close();
-                    });
-                });
+       document.querySelectorAll('.approve-user-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        const form = button.closest('form');
+        const userName = button.dataset.userName;
+
+        modal.open(
+            "Approve Registration",
+            `
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-check text-2xl text-green-600"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-800 mb-4">Approve ${userName}'s registration?</h4>
+                <p class="text-gray-600 mb-6">This will grant ${userName} access to the platform.</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="confirm-approve" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300">
+                        Approve
+                    </button>
+                    <button id="cancel-approve" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-300">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            `
+        );
+
+        // Wait 50ms so elements exist
+        setTimeout(() => {
+            document.getElementById('confirm-approve').addEventListener('click', () => {
+                form.submit(); 
             });
-            
-            // Reject user buttons
-            document.querySelectorAll('.reject-user-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const userId = e.target.getAttribute('data-user-id');
-                    const userName = e.target.getAttribute('data-user-name');
-                    
-                    modal.open(
-                        `Reject Registration`,
-                        `
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <i class="fas fa-times text-2xl text-red-600"></i>
-                            </div>
-                            <h4 class="text-xl font-bold text-gray-800 mb-4">Reject ${userName}'s registration?</h4>
-                            <p class="text-gray-600 mb-6">This will deny ${userName} access to the platform.</p>
-                            <div class="flex justify-center space-x-4">
-                                <button id="confirm-reject" class="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300">
-                                    Reject
-                                </button>
-                                <button id="cancel-reject" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-300">
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                        `
-                    );
-                    
-                    document.getElementById('confirm-reject').addEventListener('click', () => {
-                        // Remove the row from the table
-                        const row = button.closest('tr');
-                        row.remove();
-                        
-                        // Update stats
-                        updateStats();
-                        
-                        modal.open(
-                            'Registration Rejected',
-                            `
-                            <div class="text-center">
-                                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <i class="fas fa-times-circle text-2xl text-red-600"></i>
-                                </div>
-                                <h4 class="text-xl font-bold text-gray-800 mb-4">Registration Rejected!</h4>
-                                <p class="text-gray-600 mb-6">${userName} has been rejected from the platform.</p>
-                                <button id="close-success" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300">
-                                    Close
-                                </button>
-                            </div>
-                            `
-                        );
-                        
-                        document.getElementById('close-success').addEventListener('click', () => {
-                            modal.close();
-                        });
-                    });
-                    
-                    document.getElementById('cancel-reject').addEventListener('click', () => {
-                        modal.close();
-                    });
-                });
+
+            document.getElementById('cancel-approve').addEventListener('click', () => {
+                modal.close();
             });
+        }, 50);
+    });
+});
+
             
-            // Function to update stats
-            function updateStats() {
-                const pendingRows = document.querySelectorAll('tbody tr').length;
-                const pendingCount = document.querySelector('.border-l-4.border-blue-500 h3');
-                if (pendingCount) {
-                    pendingCount.textContent = pendingRows;
-                }
-            }
+         document.querySelectorAll('.reject-user-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault(); // prevent form from submitting directly
+
+        const form = button.closest('form');
+        const userName = button.dataset.userName;
+
+        modal.open(
+            "Reject Registration",
+            `
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-times text-2xl text-red-600"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-800 mb-4">Reject ${userName}'s registration?</h4>
+                <p class="text-gray-600 mb-6">This will deny ${userName} access to the platform.</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="confirm-reject"
+                        class="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-6 rounded-lg transition duration-300">
+                        Reject
+                    </button>
+                    <button id="cancel-reject"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-300">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            `
+        );
+
+        // Add event listeners after modal renders
+        setTimeout(() => {
+            document.getElementById('confirm-reject').addEventListener('click', () => {
+                form.submit(); // 🔥 Submit the Laravel reject request
+            });
+
+            document.getElementById('cancel-reject').addEventListener('click', () => {
+                modal.close();
+            });
+        }, 50);
+    });
+});
+
+            
+          
         });
     </script>
 </body>
