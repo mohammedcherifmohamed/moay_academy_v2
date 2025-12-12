@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\admins;
+use App\Models\students;
+use App\Models\teacchers;
 
 class AuthenticationController extends Controller
 {
@@ -32,7 +34,11 @@ class AuthenticationController extends Controller
     }
 
     public function LoadDashboard(){
-        return view('Admin.Dashboard');
+
+        $StudentsList = Students::all();
+        $TeachersList = teacchers::all();
+
+        return view('Admin.Dashboard',compact("StudentsList","TeachersList"));
     }
 
 
