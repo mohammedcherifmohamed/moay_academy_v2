@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('courses',function(Blueprint $table){
+        if (!Schema::hasTable('courses')) {
+            Schema::create('courses',function(Blueprint $table){
                 $table->id();
                 $table->string("title");
                 $table->unsignedBigInteger('teacher'); // the foreign key column
                 $table->foreign("teacher")->references("id")->on("teachers")->onDelete('cascade');
 
-        });
+            });
+        }
     }
 
     /**

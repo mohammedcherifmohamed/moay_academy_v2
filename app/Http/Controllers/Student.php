@@ -45,6 +45,7 @@ class Student extends Controller
         return back()->with('error', 'Invalid password');
     }
 
+    Auth::guard('teacher')->logout();
     Auth::guard('student')->login($student, $remember);
 
     return redirect()->route('voice.index2')
