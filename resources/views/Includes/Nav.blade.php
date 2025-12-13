@@ -41,6 +41,8 @@
                 </div>
                 <a href="{{route("emploiEnAllemagne")}}" class="text-secondary hover:text-accent transition-colors font-semibold ">Emploi en Allemagne</a>
                 <a href="#contact" class="text-secondary hover:text-accent transition-colors font-semibold">Contact</a>
+                            <a href="{{route("loginStudentTeacher")}}" class="text-secondary hover:text-accent transition-colors font-semibold">Login</a>
+
             </div>
             
             <div class="flex space-x-4">
@@ -67,6 +69,7 @@
                 </div>
                 <a href="{{route("emploiEnAllemagne")}}" class="text-secondary hover:text-accent transition-colors font-semibold">Emploi en Allemagne</a>
                 <a href="{{route("home")."#contact"}}" class="text-secondary hover:text-accent transition-colors font-semibold">Contact</a>
+                <a href="{{route("loginStudentTeacher")}}" class="text-secondary hover:text-accent transition-colors font-semibold">Login</a>
             </div>
         </div>
     </nav>

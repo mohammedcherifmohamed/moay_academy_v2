@@ -5,10 +5,37 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\teacchers;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class Teacher extends Controller
 {
-    
+     public function checkLogin(Request $request){
+            // dd($request->all());
+            $remember = $request->has('remember');
+
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
+
+            $teacher = teacchers::where('email', $request->email )
+                            ->where('status', 'approved')
+                            ->first();
+
+            if (!$teacher) {
+                return back()->with('error', 'Account not found');
+            }
+
+            if (!Hash::check($request->password, $teacher->password)) {
+                return back()->with('error', 'Invalid password');
+            }
+
+            Auth::guard('teacher')->login($teacher, $remember);
+
+            return redirect()->route('voice.index2')
+                            ->with('success', 'You can check your courses now');
+    }
+
 public function placeRequest(Request $req){
     // dd($req->all());
 $validated = $valid = $req->validate([

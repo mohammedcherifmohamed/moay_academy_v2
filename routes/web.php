@@ -41,13 +41,19 @@ Route::post('/Admin/Login',[AuthenticationController::class, 'checkLogin'])->nam
 Route::get('/register',[Student::class, 'loadRequestPage'])->name('Register.request');
 Route::post('/register',[Student::class, 'placeRequest'])->name('Register.post');
 
-Route::post('/registerTeacher',[Teacher::class, 'placeRequest'])->name('registerTeacher.post');
+// login page for student/Teacher
+Route::get('/LoginStudentTeacher',[Student::class, 'loadLoginPage'])->name('loginStudentTeacher');
+
+Route::post('/LoginStudent',[Student::class, 'checkLogin'])->name('student.Login');
 
 Route::post('/approaveStudent/{id}',[Teacher::class, 'placeRequest'])->name('registerTeacher.post');
-
 Route::post('/approaveStudent/{id}',[AdminController::class, 'approaveStudent'])->name('approaveStudent');
 Route::post('/rejectStudent/{id}',[AdminController::class, 'rejectStudent'])->name('rejectStudent');
 
+
+Route::post('/LoginTeacher',[Teacher::class, 'checkLogin'])->name('teacher.Login');
+
+Route::post('/registerTeacher',[Teacher::class, 'placeRequest'])->name('registerTeacher.post');
 Route::post('/approaveTeacher/{id}',[AdminController::class, 'approaveTeacher'])->name('approaveTeacher');
 Route::post('/rejectTeacher/{id}',[AdminController::class, 'rejectTeacher'])->name('rejectTeacher');
 

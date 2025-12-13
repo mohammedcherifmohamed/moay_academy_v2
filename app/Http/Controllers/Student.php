@@ -5,14 +5,52 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\students;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+
 
 class Student extends Controller
 {
+
+    public function loadLoginPage(){
+
+
+        return view("LoginStudent");
+    }
+
 
     public function loadRequestPage(){
                 return view("RequestAccess");
 
     }
+
+  public function checkLogin(Request $request)
+{
+    // dd($request->all());
+    $remember = $request->has('remember');
+
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    $student = students::where('email', $request->email )
+                      ->where('status', 'approved')
+                      ->first();
+
+    if (!$student) {
+        return back()->with('error', 'Account not found');
+    }
+
+    if (!Hash::check($request->password, $student->password)) {
+        return back()->with('error', 'Invalid password');
+    }
+
+    Auth::guard('student')->login($student, $remember);
+
+    return redirect()->route('voice.index2')
+                     ->with('success', 'You can check your courses now');
+}
+
 
     public function placeRequest(Request $req){
             // dd($req->all());
@@ -33,9 +71,6 @@ class Student extends Controller
         ]);
 
         return redirect()->back()->with("success" , "Your Request well placed please wait untill we ..");
-
-
-
 
     }
 
