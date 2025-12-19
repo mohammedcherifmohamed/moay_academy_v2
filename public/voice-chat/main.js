@@ -429,7 +429,6 @@ let leaveRoom = async () => {
     }
   }
 
-  // Redirect to appropriate dashboard based on user role
   console.log('Leaving room, isTeacher:', isTeacher);
   if (isTeacher) {
     console.log('Redirecting to teacher dashboard...');
