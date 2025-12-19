@@ -33,8 +33,14 @@ class Teacher extends Controller
             Auth::guard('student')->logout();
             Auth::guard('teacher')->login($teacher, $remember);
 
-            return redirect()->route('voice.index2')
+            return redirect()->route('teacher.dashboard')
                             ->with('success', 'You can check your courses now');
+    }
+
+    public function dashboard(){
+        $teacher = Auth::guard('teacher')->user();
+        $courses = \App\Models\courses::where('teacher', $teacher->id)->get();
+        return view('TeacherDashboard', compact('courses'));
     }
 
 public function placeRequest(Request $req){
@@ -83,12 +89,34 @@ return redirect()->back()->with("success" , "Your Request well placed please wai
         try {
             \App\Models\courses::create([
                 'title' => $request->roomName,
-                'teacher' => $teacher->id
+                'teacher' => $teacher->id,
             ]);
             \Illuminate\Support\Facades\Log::info('Course created successfully');
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Course creation failed', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'DB Error: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function startRoom(Request $request){
+        $request->validate([
+            'roomName' => 'required|string',
+        ]);
+
+        $teacher = Auth::guard('teacher')->user();
+        if(!$teacher) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $room = \App\Models\courses::where('title', $request->roomName)
+            ->where('teacher', $teacher->id)
+            ->first();
+
+        if (!$room) {
+            \Illuminate\Support\Facades\Log::warning('Start room failed - not found', ['room' => $request->roomName, 'teacher' => $teacher->id]);
+            return response()->json(['success' => false, 'message' => 'Room not found or you are not the owner'], 404);
         }
 
         return response()->json(['success' => true]);

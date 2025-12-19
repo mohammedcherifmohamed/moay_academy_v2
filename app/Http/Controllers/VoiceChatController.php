@@ -14,7 +14,28 @@ class VoiceChatController extends Controller
      * @return \Illuminate\View\View
      */
     public function index(Request $request){
-       return "test" ;
+       $isTeacher = \Illuminate\Support\Facades\Auth::guard('teacher')->check();
+       $isStudent = \Illuminate\Support\Facades\Auth::guard('student')->check();
+       
+       \Illuminate\Support\Facades\Log::info('VoiceChat Entry', [
+           'is_teacher_guard' => $isTeacher,
+           'is_student_guard' => $isStudent,
+           'teacher_id' => $isTeacher ? \Illuminate\Support\Facades\Auth::guard('teacher')->id() : null,
+           'student_id' => $isStudent ? \Illuminate\Support\Facades\Auth::guard('student')->id() : null,
+           'room' => $request->query('room')
+       ]);
+
+       $rooms = \App\Models\courses::all();
+       $roomName = $request->query('room');
+       
+       $userName = '';
+       if($isTeacher){
+           $userName = \Illuminate\Support\Facades\Auth::guard('teacher')->user()->name;
+       } else if ($isStudent){
+           $userName = \Illuminate\Support\Facades\Auth::guard('student')->user()->name;
+       }
+
+       return view('index', compact('isTeacher', 'rooms', 'userName', 'roomName'));
     }
 
     public function index2(Request $request){

@@ -52,7 +52,9 @@ Route::post('/rejectStudent/{id}',[AdminController::class, 'rejectStudent'])->na
 
 
 Route::post('/LoginTeacher',[Teacher::class, 'checkLogin'])->name('teacher.Login');
+Route::get('/teacher/dashboard', [Teacher::class, 'dashboard'])->name('teacher.dashboard');
 Route::post('/teacher/create-room', [Teacher::class, 'createRoom'])->name('teacher.createRoom');
+Route::post('/teacher/start-room', [Teacher::class, 'startRoom'])->name('teacher.startRoom');
 Route::post('/teacher/delete-room', [Teacher::class, 'deleteRoom'])->name('teacher.deleteRoom');
 
 Route::post('/registerTeacher',[Teacher::class, 'placeRequest'])->name('registerTeacher.post');
@@ -82,8 +84,9 @@ Route::get('/changeStatus/{val}',[LicenceController::class, 'changeStatus'])->na
 
 // Voice Chat Route - No authentication required
 Route::middleware(['approved'])->group(function(){
+    Route::get('/student/dashboard', [\App\Http\Controllers\Student::class, 'dashboard'])->name('student.dashboard');
     Route::post('/logout', [VoiceChatController::class, 'logout'])->name('logout');
-    Route::get('/voice-chat', [VoiceChatController::class, 'index'])->name('voice-chat.index');
+    Route::get('/voice-chat-room', [VoiceChatController::class, 'index'])->name('voice-chat.index');
     Route::get('/voice', [VoiceChatController::class, 'index2'])->name('voice.index2');
 });
     

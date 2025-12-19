@@ -48,7 +48,7 @@ class Student extends Controller
     Auth::guard('teacher')->logout();
     Auth::guard('student')->login($student, $remember);
 
-    return redirect()->route('voice.index2')
+    return redirect()->route('student.dashboard')
                      ->with('success', 'You can check your courses now');
 }
 
@@ -77,5 +77,11 @@ class Student extends Controller
 
     public function addCourse(){
 
+    }
+    public function dashboard(){
+        $courses = \App\Models\courses::all(); 
+        $userName = Auth::guard('student')->user()->name;
+
+        return view('StudentDashboard', compact('courses', 'userName'));
     }
 }

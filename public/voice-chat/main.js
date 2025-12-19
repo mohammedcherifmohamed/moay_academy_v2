@@ -2,7 +2,7 @@
 // Uses Agora RTC and RTM SDKs for video/audio communication
 
 // Get Agora App ID from window variable set by Blade template
-const appid = window.AGORA_APP_ID || 'cf7a1b4afc7243ed83bf3a0c4679095e';
+const appid = window.AGORA_APP_ID;
 
 console.log("_________ Using App ID:", appid);
 
@@ -16,7 +16,7 @@ const getRoomId = () => {
   const urlParams = new URLSearchParams(queryString);
 
   if (urlParams.get('room')) {
-    return urlParams.get('room').toLowerCase()
+    return urlParams.get('room')
   }
 }
 
@@ -31,7 +31,7 @@ let audioTracks = {
 };
 let screenTrack = null;
 let cameraTrack = null;
-let isTeacher = false;
+let isTeacher = window.IS_TEACHER || false;
 
 let micMuted = true
 
@@ -83,12 +83,12 @@ const initRtm = async (name) => {
     await rtmClient.login({ 'uid': rtmUid, 'token': token })
     console.log('RTM: login ok')
 
+    await rtmClient.addOrUpdateLocalUserAttributes({ 'name': name, 'userRtcUid': rtcUid.toString(), 'userAvatar': avatar, 'role': isTeacher ? 'teacher' : 'student' })
+    console.log('RTM: attributes set', { name, userAvatar: avatar, role: isTeacher ? 'teacher' : 'student' })
+
     channel = rtmClient.createChannel(roomId)
     await channel.join()
     console.log('RTM: channel join ok', roomId)
-
-    await rtmClient.addOrUpdateLocalUserAttributes({ 'name': name, 'userRtcUid': rtcUid.toString(), 'userAvatar': avatar, 'role': isTeacher ? 'teacher' : 'student' })
-    console.log('RTM: attributes set', { name, userAvatar: avatar, role: isTeacher ? 'teacher' : 'student' })
     // show the current user in the member list immediately
     renderMemberCard({ memberId: rtmUid, name, userRtcUid: rtcUid, userAvatar: avatar })
 
@@ -114,8 +114,14 @@ const initRtc = async () => {
 
   await rtcClient.join(appid, roomId, token, rtcUid)
   audioTracks.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+  console.log("Audio track created");
   audioTracks.localAudioTrack.setMuted(micMuted)
-  await rtcClient.publish(audioTracks.localAudioTrack);
+  try {
+    await rtcClient.publish(audioTracks.localAudioTrack);
+    console.log("Audio track published successfully");
+  } catch (err) {
+    console.error("Failed to publish audio track:", err);
+  }
 
   initVolumeIndicator()
 }
@@ -144,11 +150,14 @@ let initVolumeIndicator = async () => {
 }
 
 let handleUserPublished = async (user, mediaType) => {
+  console.log("User published: ", user.uid, mediaType);
   await rtcClient.subscribe(user, mediaType);
+  console.log("Subscribed to user: ", user.uid);
 
   if (mediaType === "audio") {
     audioTracks.remoteAudioTracks[user.uid] = [user.audioTrack]
     user.audioTrack.play();
+    console.log("Playing audio for user: ", user.uid);
   }
   if (mediaType === "video") {
     const track = user.videoTrack
@@ -181,7 +190,7 @@ const renderMemberCard = ({ memberId, name, userRtcUid, userAvatar }) => {
   const container = document.getElementById("members")
   if (!container) return
   const safeAvatar = userAvatar || ''
-  const displayName = name || `User ${userRtcUid}`
+  const displayName = name || `User ${memberId}`
   console.log("Rendering member", { memberId, displayName, userRtcUid, userAvatar: safeAvatar });
   // ensure we don't duplicate the same member card
   const existing = document.getElementById(memberId)
@@ -290,6 +299,7 @@ const toggleMic = async (e) => {
     micMuted = true
   }
   audioTracks.localAudioTrack.setMuted(micMuted)
+  console.log("Mic toggled. Muted:", micMuted);
 }
 
 const stopScreenShare = async () => {
@@ -347,13 +357,13 @@ const enterRoom = async (e) => {
     return
   }
 
-  roomId = e.target.roomname.value.toLowerCase();
+  roomId = e.target.roomname.value;
   isTeacher = window.IS_TEACHER || false;
 
   if (isTeacher) {
-    console.log("Attempting to create room as teacher...");
+    console.log("Attempting to start room as teacher...");
     try {
-      const response = await fetch('/teacher/create-room', {
+      const response = await fetch('/teacher/start-room', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -362,15 +372,14 @@ const enterRoom = async (e) => {
         body: JSON.stringify({ roomName: roomId })
       });
       const result = await response.json();
-      console.log("Create room response:", result);
+      console.log("Start room response:", result);
       if (!result.success) {
-        alert('Server failed to create room: ' + (result.message || 'Unknown error'));
-      } else {
-        alert('Room created in DB: ' + roomId);
+        console.error('Server failed to start room:', result.message);
+        alert('Could not activate room: ' + result.message);
+        return; // Don't proceed to enter if we couldn't start it
       }
     } catch (e) {
-      console.error("Failed to create room in DB", e);
-      alert('Network/JS error creating room: ' + e.message);
+      console.error("Failed to start room in DB", e);
     }
   }
 
@@ -384,6 +393,8 @@ const enterRoom = async (e) => {
   lobbyForm.style.display = 'none'
   document.getElementById('room-header').style.display = "flex"
   document.getElementById('room-name').innerText = roomId
+  const lHeader = document.getElementById('listeners-header')
+  if (lHeader) lHeader.style.display = 'block';
 }
 
 let leaveRtmChannel = async () => {
@@ -418,9 +429,15 @@ let leaveRoom = async () => {
     }
   }
 
-  document.getElementById('form').style.display = 'block'
-  document.getElementById('room-header').style.display = 'none'
-  document.getElementById('members').innerHTML = ''
+  // Redirect to appropriate dashboard based on user role
+  console.log('Leaving room, isTeacher:', isTeacher);
+  if (isTeacher) {
+    console.log('Redirecting to teacher dashboard...');
+    window.location.href = '/teacher/dashboard';
+  } else {
+    console.log('Redirecting to student dashboard...');
+    window.location.href = '/student/dashboard';
+  }
 }
 
 const avatarsList = [
@@ -429,7 +446,7 @@ const avatarsList = [
 ];
 
 window.joinRoomDirectly = async (roomName) => {
-  roomId = roomName.toLowerCase();
+  roomId = roomName;
   isTeacher = false; // Always false for direct join (students)
 
   const randomAvatar = avatarsList[Math.floor(Math.random() * avatarsList.length)];
@@ -453,6 +470,8 @@ window.joinRoomDirectly = async (roomName) => {
 
   document.getElementById('room-header').style.display = "flex"
   document.getElementById('room-name').innerText = roomId
+  const lHeader = document.getElementById('listeners-header')
+  if (lHeader) lHeader.style.display = 'block';
 }
 
 

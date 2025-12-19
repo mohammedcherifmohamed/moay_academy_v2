@@ -36,7 +36,7 @@
         @if($isTeacher)
         <form id="form">
           <div>
-            <h3>Select An Avatar:</h3>
+            <h3>Select An Avatar zz:</h3>
           </div>
           <div id="avatars">
               <img class="avatar-selection" src="{{ asset('voice-chat/avatars/male-1.png') }}"/>
@@ -83,6 +83,7 @@
         </div>
       @endif
     
+        <h3 id="listeners-header" style="color:white; margin-top:20px; display:none;">Listeners:</h3>
         <div id="members">
 
         </div>
@@ -101,7 +102,7 @@
     
     <script>
         // Pass Agora App ID to JavaScript
-        window.AGORA_APP_ID = "cf7a1b4afc7243ed83bf3a0c4679095e";
+        window.AGORA_APP_ID = "{{ env('AGORA_APP_ID') }}";
         window.IS_TEACHER = {{ $isTeacher ? 'true' : 'false' }};
         window.USER_NAME = "{{ $userName }}";
     </script>
